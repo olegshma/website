@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>body{margin:0;padding:0;}</style>
+<script src="https://code.createjs.com/createjs-2015.11.26.min.js"></script>
+<script src="240x400.js"></script>
+</head>
+<body>
+<div id="animation_container" style="background-color:#fff;width:240px;height:400px;position:relative;">
+  <canvas id="canvas" width="240" height="400" style="position:absolute;display:block;background-color:#fff;"></canvas>
+  <div id="dom_overlay_container" style="pointer-events:none;overflow:hidden;width:240px;height:400px;position:absolute;left:0;top:0;display:block;"></div>
+</div>
+<script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+  canvas = document.getElementById("canvas");
+  anim_container = document.getElementById("animation_container");
+  dom_overlay_container = document.getElementById("dom_overlay_container");
+  var comp = AdobeAn.getComposition("F3B0913B7E91FF41801A20FAE67DC2FC");
+  var lib = comp.getLibrary();
+  createjs.MotionGuidePlugin.install();
+  var loader = new createjs.LoadQueue(false);
+  loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+  loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+  loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+  var images = comp.getImages();
+  if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }
+}
+function handleComplete(evt, comp) {
+  var lib = comp.getLibrary();
+  var ss = comp.getSpriteSheet();
+  var queue = evt.target;
+  var ssMetadata = lib.ssMetadata;
+  for(var i=0; i<ssMetadata.length; i++) {
+    ss[ssMetadata[i].name] = new createjs.SpriteSheet({"images":[queue.getResult(ssMetadata[i].name)],"frames":ssMetadata[i].frames});
+  }
+  exportRoot = new lib._240x400();
+  stage = new lib.Stage(canvas);
+  fnStartAnimation = function() {
+    stage.addChild(exportRoot);
+    createjs.Ticker.setFPS(lib.properties.fps);
+    createjs.Ticker.addEventListener("tick", stage);
+  };
+  AdobeAn.compositionLoaded(lib.properties.id);
+  fnStartAnimation();
+}
+init();
+</script>
+</body>
+</html>
